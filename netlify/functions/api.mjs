@@ -1,8 +1,14 @@
 import { getStore } from "@netlify/blobs";
 import crypto from "crypto";
 
-const store = getStore("family-tracker");
 const TOKEN_SECRET = process.env.AUTH_SECRET || process.env.NETLIFY_SITE_ID || "dev-family-tracker-secret";
+
+function getBlobStore() {
+  const siteID = process.env.NETLIFY_SITE_ID || process.env.SITE_ID || "";
+  const token = process.env.NETLIFY_AUTH_TOKEN || process.env.NETLIFY_API_TOKEN || "";
+  if (siteID && token) return getStore("family-tracker", { siteID, token });
+  return getStore("family-tracker");
+}
 
 function json(statusCode, body) {
   return {
@@ -16,6 +22,7 @@ function json(statusCode, body) {
 }
 
 async function readDb() {
+  const store = getBlobStore();
   const stored = await store.get("db", { type: "json" });
   if (!stored) return { users: [], state: {} };
   if (Array.isArray(stored.users) && stored.state) return stored;
@@ -23,6 +30,7 @@ async function readDb() {
 }
 
 async function writeDb(db) {
+  const store = getBlobStore();
   await store.setJSON("db", db);
 }
 
