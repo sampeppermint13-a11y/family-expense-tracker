@@ -10,6 +10,16 @@ function getBlobStore() {
   return getStore("family-tracker");
 }
 
+function envSummary() {
+  return {
+    hasNetlifySiteId: Boolean(process.env.NETLIFY_SITE_ID),
+    hasSiteId: Boolean(process.env.SITE_ID),
+    hasNetlifyAuthToken: Boolean(process.env.NETLIFY_AUTH_TOKEN),
+    hasNetlifyApiToken: Boolean(process.env.NETLIFY_API_TOKEN),
+    hasAuthSecret: Boolean(process.env.AUTH_SECRET)
+  };
+}
+
 function json(statusCode, body) {
   return {
     statusCode,
@@ -82,6 +92,11 @@ function getPath(event) {
 export async function handler(event) {
   const path = getPath(event);
   const method = event.httpMethod;
+
+  if (path === "/env-check" && method === "GET") {
+    return json(200, envSummary());
+  }
+
   let db;
   try {
     db = await readDb();
@@ -89,7 +104,8 @@ export async function handler(event) {
     return json(500, {
       error:
         "Netlify Blobs is not configured. Add NETLIFY_SITE_ID and NETLIFY_AUTH_TOKEN environment variables in Netlify, then redeploy.",
-      detail: error.message
+      detail: error.message,
+      env: envSummary()
     });
   }
   const authUser = getAuthUser(event);
