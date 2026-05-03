@@ -783,22 +783,32 @@ function handleChipDelete(collection, prefix) {
 
     if (!confirmDelete) return;
 
+    // 🔥 REMOVE RELATED DATA
     if (prefix === "owner") {
-      state.expenses = state.expenses.filter((expense) => expense.ownerId !== id);
-      state.budgets = state.budgets.filter((budget) => budget.ownerId !== id);
+      state.expenses = state.expenses.filter((e) => e.ownerId !== id);
+      state.budgets = state.budgets.filter((b) => b.ownerId !== id);
     }
 
     if (prefix === "wallet") {
-      state.expenses = state.expenses.filter((expense) => expense.walletId !== id);
+      state.expenses = state.expenses.filter((e) => e.walletId !== id);
     }
 
     if (prefix === "category") {
-      state.expenses = state.expenses.filter((expense) => expense.categoryId !== id);
+      state.expenses = state.expenses.filter((e) => e.categoryId !== id);
     }
 
+    // 🔥 REMOVE ITEM
     state[collection] = state[collection].filter((item) => item.id !== id);
 
-    saveAndRender();
+    // 🔥 FORCE SAVE + SYNC FIX
+    saveLocalState();          // save locally first
+    pushStateToServer();       // push immediately to server
+    render();                  // render UI
+
+    // OPTIONAL: slight delay to avoid overwrite
+    setTimeout(() => {
+      refreshFromServer();
+    }, 500);
   };
 }
 
