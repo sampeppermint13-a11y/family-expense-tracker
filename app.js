@@ -765,15 +765,39 @@ function handleChipDelete(collection, prefix) {
   return (event) => {
     const button = event.target.closest(`[data-delete-${prefix}]`);
     if (!button) return;
+
     const id = button.dataset[`delete${capitalize(prefix)}`];
-    if (isItemUsed(prefix, id)) {
-      alert("This item is used by an expense and cannot be deleted.");
-      return;
+
+    if (prefix === "category") {
+      const category = state.categories.find((item) => item.id === id);
+
+      if (category?.isDefault) {
+        alert("Default categories cannot be deleted.");
+        return;
+      }
     }
+
+    const confirmDelete = confirm(
+      "Delete this item? Related expenses and budgets using it will also be deleted."
+    );
+
+    if (!confirmDelete) return;
+
     if (prefix === "owner") {
+      state.expenses = state.expenses.filter((expense) => expense.ownerId !== id);
       state.budgets = state.budgets.filter((budget) => budget.ownerId !== id);
     }
+
+    if (prefix === "wallet") {
+      state.expenses = state.expenses.filter((expense) => expense.walletId !== id);
+    }
+
+    if (prefix === "category") {
+      state.expenses = state.expenses.filter((expense) => expense.categoryId !== id);
+    }
+
     state[collection] = state[collection].filter((item) => item.id !== id);
+
     saveAndRender();
   };
 }
