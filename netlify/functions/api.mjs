@@ -71,6 +71,8 @@ function publicUser(user) {
 
 function getPath(event) {
   const url = new URL(event.rawUrl || `https://example.com${event.path}`);
+  const route = url.searchParams.get("route");
+  if (route) return route.startsWith("/") ? route : `/${route}`;
   return url.pathname
     .replace(/^\/api\/?/, "/")
     .replace(/^\/\.netlify\/functions\/api\/?/, "/")
