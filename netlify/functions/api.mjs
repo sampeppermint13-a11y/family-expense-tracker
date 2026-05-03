@@ -1,12 +1,24 @@
-import { getStore } from "@netlify/blobs";
+import { connectLambda, getStore } from "@netlify/blobs";
 import crypto from "crypto";
 
-const TOKEN_SECRET = process.env.AUTH_SECRET || process.env.NETLIFY_SITE_ID || "dev-family-tracker-secret";
+const TOKEN_SECRET =
+  process.env.AUTH_SECRET ||
+  process.env.NETLIFY_SITE_ID ||
+  "dev-family-tracker-secret";
 
 function getBlobStore() {
   const siteID = process.env.NETLIFY_SITE_ID || process.env.SITE_ID || "";
-  const token = process.env.NETLIFY_AUTH_TOKEN || process.env.NETLIFY_API_TOKEN || "";
-  if (siteID && token) return getStore("family-tracker", { siteID, token });
+  const token =
+    process.env.NETLIFY_AUTH_TOKEN || process.env.NETLIFY_API_TOKEN || "";
+
+  if (siteID && token) {
+    return getStore({
+      name: "family-tracker",
+      siteID,
+      token,
+    });
+  }
+
   return getStore("family-tracker");
 }
 
@@ -16,7 +28,7 @@ function envSummary() {
     hasSiteId: Boolean(process.env.SITE_ID),
     hasNetlifyAuthToken: Boolean(process.env.NETLIFY_AUTH_TOKEN),
     hasNetlifyApiToken: Boolean(process.env.NETLIFY_API_TOKEN),
-    hasAuthSecret: Boolean(process.env.AUTH_SECRET)
+    hasAuthSecret: Boolean(process.env.AUTH_SECRET),
   };
 }
 
@@ -25,17 +37,19 @@ function json(statusCode, body) {
     statusCode,
     headers: {
       "Content-Type": "application/json",
-      "Cache-Control": "no-store"
+      "Cache-Control": "no-store",
     },
-    body: JSON.stringify(body)
+    body: JSON.stringify(body),
   };
 }
 
 async function readDb() {
   const store = getBlobStore();
   const stored = await store.get("db", { type: "json" });
+
   if (!stored) return { users: [], state: {} };
   if (Array.isArray(stored.users) && stored.state) return stored;
+
   return { users: [], state: stored || {} };
 }
 
@@ -51,7 +65,11 @@ function hashPassword(password, salt = crypto.randomBytes(16).toString("hex")) {
 
 function verifyPassword(password, user) {
   const { hash } = hashPassword(password, user.salt);
-  return crypto.timingSafeEqual(Buffer.from(hash, "hex"), Buffer.from(user.hash, "hex"));
+
+  return crypto.timingSafeEqual(
+    Buffer.from(hash, "hex"),
+    Buffer.from(user.hash, "hex")
+  );
 }
 
 function sign(value) {
@@ -59,7 +77,10 @@ function sign(value) {
 }
 
 function createToken(username) {
-  const payload = Buffer.from(JSON.stringify({ username, createdAt: Date.now() })).toString("base64url");
+  const payload = Buffer.from(
+    JSON.stringify({ username, createdAt: Date.now() })
+  ).toString("base64url");
+
   return `${payload}.${sign(payload)}`;
 }
 
@@ -67,9 +88,13 @@ function getAuthUser(event) {
   const header = event.headers.authorization || event.headers.Authorization || "";
   const token = header.startsWith("Bearer ") ? header.slice(7) : "";
   const [payload, signature] = token.split(".");
+
   if (!payload || !signature || sign(payload) !== signature) return "";
+
   try {
-    return JSON.parse(Buffer.from(payload, "base64url").toString("utf8")).username || "";
+    return (
+      JSON.parse(Buffer.from(payload, "base64url").toString("utf8")).username || ""
+    );
   } catch {
     return "";
   }
@@ -82,14 +107,20 @@ function publicUser(user) {
 function getPath(event) {
   const url = new URL(event.rawUrl || `https://example.com${event.path}`);
   const route = url.searchParams.get("route");
+
   if (route) return route.startsWith("/") ? route : `/${route}`;
-  return url.pathname
-    .replace(/^\/api\/?/, "/")
-    .replace(/^\/\.netlify\/functions\/api\/?/, "/")
-    .replace(/\/$/, "") || "/";
+
+  return (
+    url.pathname
+      .replace(/^\/api\/?/, "/")
+      .replace(/^\/\.netlify\/functions\/api\/?/, "/")
+      .replace(/\/$/, "") || "/"
+  );
 }
 
 export async function handler(event) {
+  connectLambda(event);
+
   const path = getPath(event);
   const method = event.httpMethod;
 
@@ -98,16 +129,18 @@ export async function handler(event) {
   }
 
   let db;
+
   try {
     db = await readDb();
   } catch (error) {
     return json(500, {
       error:
-        "Netlify Blobs is not configured. Add NETLIFY_SITE_ID and NETLIFY_AUTH_TOKEN environment variables in Netlify, then redeploy.",
+        "Netlify Blobs is not configured. Check NETLIFY_SITE_ID and NETLIFY_AUTH_TOKEN environment variables in Netlify, then redeploy.",
       detail: error.message,
-      env: envSummary()
+      env: envSummary(),
     });
   }
+
   const authUser = getAuthUser(event);
 
   if (path === "/bootstrap" && method === "GET") {
@@ -117,14 +150,24 @@ export async function handler(event) {
   if (path === "/register" && method === "POST") {
     try {
       const { username, password } = JSON.parse(event.body || "{}");
+
       if (!username || !password || password.length < 4) {
-        return json(400, { error: "Enter a username and a password with at least 4 characters." });
+        return json(400, {
+          error: "Enter a username and a password with at least 4 characters.",
+        });
       }
-      if (db.users.some((user) => user.username.toLowerCase() === String(username).toLowerCase())) {
+
+      if (
+        db.users.some(
+          (user) => user.username.toLowerCase() === String(username).toLowerCase()
+        )
+      ) {
         return json(409, { error: "Username already exists." });
       }
+
       db.users.push({ username, ...hashPassword(password) });
       await writeDb(db);
+
       return json(200, { username, token: createToken(username) });
     } catch {
       return json(400, { error: "Invalid request." });
@@ -134,17 +177,27 @@ export async function handler(event) {
   if (path === "/login" && method === "POST") {
     try {
       const { username, password } = JSON.parse(event.body || "{}");
-      const user = db.users.find((item) => item.username.toLowerCase() === String(username).toLowerCase());
+
+      const user = db.users.find(
+        (item) => item.username.toLowerCase() === String(username).toLowerCase()
+      );
+
       if (!user || !verifyPassword(password, user)) {
         return json(401, { error: "Wrong username or password." });
       }
-      return json(200, { username: user.username, token: createToken(user.username) });
+
+      return json(200, {
+        username: user.username,
+        token: createToken(user.username),
+      });
     } catch {
       return json(400, { error: "Invalid request." });
     }
   }
 
-  if (!authUser) return json(401, { error: "Unauthorized" });
+  if (!authUser) {
+    return json(401, { error: "Unauthorized" });
+  }
 
   if (path === "/users" && method === "GET") {
     return json(200, { users: db.users.map(publicUser) });
@@ -153,14 +206,24 @@ export async function handler(event) {
   if (path === "/users" && method === "POST") {
     try {
       const { username, password } = JSON.parse(event.body || "{}");
+
       if (!username || !password || password.length < 4) {
-        return json(400, { error: "Enter a username and a password with at least 4 characters." });
+        return json(400, {
+          error: "Enter a username and a password with at least 4 characters.",
+        });
       }
-      if (db.users.some((user) => user.username.toLowerCase() === String(username).toLowerCase())) {
+
+      if (
+        db.users.some(
+          (user) => user.username.toLowerCase() === String(username).toLowerCase()
+        )
+      ) {
         return json(409, { error: "Username already exists." });
       }
+
       db.users.push({ username, ...hashPassword(password) });
       await writeDb(db);
+
       return json(200, { ok: true });
     } catch {
       return json(400, { error: "Invalid request." });
@@ -175,6 +238,7 @@ export async function handler(event) {
     try {
       db.state = JSON.parse(event.body || "{}");
       await writeDb(db);
+
       return json(200, { ok: true });
     } catch {
       return json(400, { error: "Invalid JSON" });
