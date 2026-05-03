@@ -82,7 +82,16 @@ function getPath(event) {
 export async function handler(event) {
   const path = getPath(event);
   const method = event.httpMethod;
-  const db = await readDb();
+  let db;
+  try {
+    db = await readDb();
+  } catch (error) {
+    return json(500, {
+      error:
+        "Netlify Blobs is not configured. Add NETLIFY_SITE_ID and NETLIFY_AUTH_TOKEN environment variables in Netlify, then redeploy.",
+      detail: error.message
+    });
+  }
   const authUser = getAuthUser(event);
 
   if (path === "/bootstrap" && method === "GET") {
