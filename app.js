@@ -1042,7 +1042,8 @@ async function parseJsonResponse(response, path, options, authorized) {
   const text = await response.text();
   if (!contentType.includes("application/json")) {
     if (path.startsWith("/api/")) {
-      const directPath = path.replace("/api/", "/.netlify/functions/api/");
+      const route = encodeURIComponent(path.replace("/api/", "/"));
+      const directPath = `/.netlify/functions/api?route=${route}`;
       const retry = await fetch(directPath, {
         ...options,
         headers: {
