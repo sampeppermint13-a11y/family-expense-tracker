@@ -805,10 +805,6 @@ function handleChipDelete(collection, prefix) {
     pushStateToServer();       // push immediately to server
     render();                  // render UI
 
-    // OPTIONAL: slight delay to avoid overwrite
-    setTimeout(() => {
-      refreshFromServer();
-    }, 500);
   };
 }
 
@@ -1030,9 +1026,13 @@ function clearAuth() {
 
 async function refreshFromServer() {
   if (!syncEnabled) return;
+
   try {
     const remote = await apiRequest("/api/state");
-    state = migrateState(mergeStates(remote, state, false));
+
+    // ✅ DO NOT MERGE — use server as source of truth
+    state = migrateState(remote);
+
     saveLocalState();
     setSyncStatus(currentUser ? `Synced: ${currentUser}` : "Synced");
     render();
@@ -1043,15 +1043,18 @@ async function refreshFromServer() {
 
 function pushStateToServer() {
   if (!syncEnabled) return;
+
   clearTimeout(pushTimer);
+
+  const snapshot = clone(state);
+
   pushTimer = setTimeout(async () => {
     try {
-      const remote = await apiRequest("/api/state");
-      const merged = mergeStates(remote, state, true);
       await apiRequest("/api/state", {
         method: "PUT",
-        body: JSON.stringify(merged)
+        body: JSON.stringify(snapshot)
       });
+
       setSyncStatus(currentUser ? `Synced: ${currentUser}` : "Synced");
     } catch {
       setSyncStatus("Sync failed");
