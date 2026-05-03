@@ -974,7 +974,7 @@ async function publicApiRequest(path, options = {}) {
       ...(options.headers || {})
     }
   });
-  return parseJsonResponse(response);
+  return parseJsonResponse(response, path, options, false);
 }
 
 function showAuthScreen() {
@@ -1034,13 +1034,25 @@ async function apiRequest(path, options = {}) {
       ...(options.headers || {})
     }
   });
-  return parseJsonResponse(response);
+  return parseJsonResponse(response, path, options, true);
 }
 
-async function parseJsonResponse(response) {
+async function parseJsonResponse(response, path, options, authorized) {
   const contentType = response.headers.get("content-type") || "";
   const text = await response.text();
   if (!contentType.includes("application/json")) {
+    if (path.startsWith("/api/")) {
+      const directPath = path.replace("/api/", "/.netlify/functions/api/");
+      const retry = await fetch(directPath, {
+        ...options,
+        headers: {
+          "Content-Type": "application/json",
+          ...(authorized ? { "Authorization": `Bearer ${authToken}` } : {}),
+          ...(options.headers || {})
+        }
+      });
+      return parseJsonResponse(retry, directPath, options, authorized);
+    }
     throw new Error("Netlify API is not deployed. /api is returning the website HTML instead of JSON.");
   }
   const payload = text ? JSON.parse(text) : {};
