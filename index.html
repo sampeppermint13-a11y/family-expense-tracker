@@ -1,0 +1,479 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Family Debt & Expense Tracker</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="auth-screen" id="authScreen" hidden>
+      <form class="auth-card" id="authForm">
+        <span class="heading-icon icon" data-icon="users"></span>
+        <h2 id="authTitle">Family Login</h2>
+        <p id="authHelp">Use your family app username and password.</p>
+        <input id="authUsername" type="text" placeholder="Username" autocomplete="username" required />
+        <input id="authPassword" type="password" placeholder="Password" autocomplete="current-password" required />
+        <button class="primary-button" type="submit" id="authSubmitButton">Login</button>
+        <button class="secondary-button" type="button" id="authToggleButton">Create an account</button>
+        <p class="auth-error" id="authError"></p>
+      </form>
+    </div>
+
+    <div class="app-shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Family Finance</p>
+          <h1>Debt & Expense Tracker</h1>
+        </div>
+        <div class="topbar-actions">
+          <div class="sync-pill" id="syncStatus">Local mode</div>
+          <div class="currency-pill" id="activeCurrency">PHP</div>
+        </div>
+      </header>
+
+      <nav class="tabbar" aria-label="Main navigation">
+        <button class="tab-button active" type="button" data-tab="settings">
+          <span class="icon" data-icon="settings"></span>
+          Settings
+        </button>
+        <button class="tab-button" type="button" data-tab="expenses">
+          <span class="icon" data-icon="receipt"></span>
+          Expenses
+        </button>
+        <button class="tab-button" type="button" data-tab="dashboard">
+          <span class="icon" data-icon="chart"></span>
+          Dashboard
+        </button>
+      </nav>
+
+      <main>
+        <section class="tab-panel active" id="settingsPanel" aria-labelledby="settings">
+          <div class="section-grid settings-grid">
+            <section class="panel">
+              <div class="panel-heading">
+                <span class="heading-icon icon" data-icon="users"></span>
+                <div>
+                  <h2>Owners</h2>
+                  <p>Add family members who can own expenses.</p>
+                </div>
+              </div>
+              <form class="inline-form" id="ownerForm">
+                <input id="ownerName" type="text" placeholder="Owner name" autocomplete="off" required />
+                <select id="ownerIcon" aria-label="Owner icon">
+                  <option value="user">Person</option>
+                  <option value="crown">Parent</option>
+                  <option value="heart">Family</option>
+                  <option value="star">Member</option>
+                </select>
+                <select id="ownerColor" aria-label="Owner color">
+                  <option value="#ffe66d">Yellow</option>
+                  <option value="#6c5ce7">Violet</option>
+                  <option value="#00b894">Green</option>
+                  <option value="#ff7675">Coral</option>
+                </select>
+                <label class="upload-button" for="ownerIconUpload">
+                  <span class="icon" data-icon="upload"></span>
+                  Upload Icon
+                  <input id="ownerIconUpload" type="file" accept="image/*" />
+                </label>
+                <button class="primary-button" type="submit">
+                  <span class="icon" data-icon="plus"></span>
+                  Add
+                </button>
+              </form>
+              <div class="chip-list" id="ownerList"></div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-heading">
+                <span class="heading-icon icon" data-icon="wallet"></span>
+                <div>
+                  <h2>Wallets</h2>
+                  <p>Cards, banks, cash, and payment sources.</p>
+                </div>
+              </div>
+              <form class="inline-form" id="walletForm">
+                <input id="walletName" type="text" placeholder="Wallet name" autocomplete="off" required />
+                <select id="walletIcon" aria-label="Wallet icon">
+                  <option value="credit-card">Credit card</option>
+                  <option value="bank">Bank</option>
+                  <option value="cash">Cash</option>
+                  <option value="phone">E-wallet</option>
+                </select>
+                <select id="walletColor" aria-label="Wallet color">
+                  <option value="#74b9ff">Blue</option>
+                  <option value="#55efc4">Mint</option>
+                  <option value="#fdcb6e">Gold</option>
+                  <option value="#fab1a0">Peach</option>
+                </select>
+                <label class="upload-button" for="walletIconUpload">
+                  <span class="icon" data-icon="upload"></span>
+                  Upload Icon
+                  <input id="walletIconUpload" type="file" accept="image/*" />
+                </label>
+                <button class="primary-button" type="submit">
+                  <span class="icon" data-icon="plus"></span>
+                  Add
+                </button>
+              </form>
+              <div class="chip-list" id="walletList"></div>
+            </section>
+
+            <section class="panel compact-panel">
+              <div class="panel-heading">
+                <span class="heading-icon icon" data-icon="currency"></span>
+                <div>
+                  <h2>Currency</h2>
+                  <p>Used across expenses and summaries.</p>
+                </div>
+              </div>
+              <select id="currencySelect" class="full-control" aria-label="Default currency">
+                <option value="PHP">PHP - Philippine Peso</option>
+                <option value="USD">USD - US Dollar</option>
+                <option value="EUR">EUR - Euro</option>
+                <option value="JPY">JPY - Japanese Yen</option>
+                <option value="SGD">SGD - Singapore Dollar</option>
+                <option value="AED">AED - UAE Dirham</option>
+                <option value="AUD">AUD - Australian Dollar</option>
+                <option value="CAD">CAD - Canadian Dollar</option>
+                <option value="CHF">CHF - Swiss Franc</option>
+                <option value="CNY">CNY - Chinese Yuan</option>
+                <option value="GBP">GBP - British Pound</option>
+                <option value="HKD">HKD - Hong Kong Dollar</option>
+                <option value="IDR">IDR - Indonesian Rupiah</option>
+                <option value="INR">INR - Indian Rupee</option>
+                <option value="KRW">KRW - South Korean Won</option>
+                <option value="MYR">MYR - Malaysian Ringgit</option>
+                <option value="NZD">NZD - New Zealand Dollar</option>
+                <option value="SAR">SAR - Saudi Riyal</option>
+                <option value="THB">THB - Thai Baht</option>
+                <option value="TWD">TWD - Taiwan Dollar</option>
+              </select>
+            </section>
+
+            <section class="panel">
+              <div class="panel-heading">
+                <span class="heading-icon icon" data-icon="tags"></span>
+                <div>
+                  <h2>Categories</h2>
+                  <p>Default categories stay separate from your custom list.</p>
+                </div>
+              </div>
+              <form class="inline-form" id="categoryForm">
+                <input id="categoryName" type="text" placeholder="Category name" autocomplete="off" required />
+                <input
+                  id="categoryCustomIcon"
+                  type="text"
+                  maxlength="3"
+                  placeholder="Own icon"
+                  aria-label="Custom category icon"
+                  autocomplete="off"
+                />
+                <label class="upload-button" for="categoryIconUpload">
+                  <span class="icon" data-icon="upload"></span>
+                  Upload Icon
+                  <input id="categoryIconUpload" type="file" accept="image/*" />
+                </label>
+                <select id="categoryColor" aria-label="Category color">
+                  <option value="#ff7675">Red</option>
+                  <option value="#fdcb6e">Yellow</option>
+                  <option value="#55efc4">Mint</option>
+                  <option value="#74b9ff">Blue</option>
+                  <option value="#a29bfe">Lavender</option>
+                </select>
+                <button class="primary-button" type="submit">
+                  <span class="icon" data-icon="plus"></span>
+                  Add
+                </button>
+              </form>
+              <div class="category-section">
+                <h3>Custom Categories</h3>
+                <div class="chip-list category-list" id="customCategoryList"></div>
+              </div>
+              <div class="category-section">
+                <h3>Default Categories</h3>
+                <div class="chip-list category-list default-category-list" id="defaultCategoryList"></div>
+              </div>
+            </section>
+
+            <section class="panel budget-panel">
+              <div class="panel-heading">
+                <span class="heading-icon icon" data-icon="budget"></span>
+                <div>
+                  <h2>Monthly Budget</h2>
+                  <p>Set owner budgets used by the dashboard.</p>
+                </div>
+              </div>
+              <form class="budget-form" id="budgetForm">
+                <label>
+                  Owner
+                  <select id="budgetOwner" required></select>
+                </label>
+                <label>
+                  Month
+                  <input id="budgetMonth" type="month" required />
+                </label>
+                <label>
+                  Amount
+                  <input id="budgetAmount" type="number" min="0" step="0.01" placeholder="0.00" required />
+                </label>
+                <button class="primary-button" type="submit">
+                  <span class="icon" data-icon="save"></span>
+                  Save Budget
+                </button>
+              </form>
+              <div class="budget-list" id="budgetList"></div>
+            </section>
+
+            <section class="panel budget-panel account-panel">
+              <div class="panel-heading">
+                <span class="heading-icon icon" data-icon="users"></span>
+                <div>
+                  <h2>Family App Accounts</h2>
+                  <p>Add another login for a family member.</p>
+                </div>
+              </div>
+              <form class="budget-form" id="accountForm">
+                <label>
+                  Username
+                  <input id="newAccountUsername" type="text" placeholder="Username" autocomplete="off" required />
+                </label>
+                <label>
+                  Password
+                  <input id="newAccountPassword" type="password" placeholder="Password" autocomplete="new-password" required />
+                </label>
+                <button class="primary-button" type="submit">
+                  <span class="icon" data-icon="plus"></span>
+                  Add Account
+                </button>
+              </form>
+              <div class="budget-list" id="accountList"></div>
+            </section>
+          </div>
+        </section>
+
+        <section class="tab-panel" id="expensesPanel" aria-labelledby="expenses">
+          <div class="section-grid expense-layout">
+            <section class="panel expense-form-panel">
+              <div class="panel-heading">
+                <span class="heading-icon icon" data-icon="receipt"></span>
+                <div>
+                  <h2 id="expenseFormTitle">Add Expense</h2>
+                  <p>Declare one-time purchases or monthly installment debts.</p>
+                </div>
+              </div>
+
+              <form id="expenseForm" class="expense-form">
+                <label>
+                  Owner
+                  <div class="select-card">
+                    <span id="expenseOwnerPreview" class="select-card-icon"></span>
+                    <select id="expenseOwner" required></select>
+                  </div>
+                </label>
+                <label>
+                  Wallet
+                  <div class="split-control">
+                    <div class="select-card">
+                      <span id="expenseWalletPreview" class="select-card-icon"></span>
+                      <select id="expenseWallet" required></select>
+                    </div>
+                    <button class="icon-button" type="button" id="quickWalletButton" title="Create wallet">
+                      <span class="icon" data-icon="plus"></span>
+                    </button>
+                  </div>
+                </label>
+                <label>
+                  Date
+                  <input id="expenseDate" type="date" required />
+                </label>
+                <label>
+                  Category
+                  <div class="select-card">
+                    <span id="expenseCategoryPreview" class="select-card-icon"></span>
+                    <select id="expenseCategory" required></select>
+                  </div>
+                </label>
+                <label class="description-field">
+                  Description
+                  <input id="expenseDescription" type="text" placeholder="e.g. Shoes, tuition, phone plan" autocomplete="off" />
+                </label>
+                <label>
+                  Amount
+                  <input id="expenseAmount" type="number" min="0" step="0.01" placeholder="0.00" required />
+                </label>
+                <div class="toggle-row">
+                  <div>
+                    <strong>Installment</strong>
+                    <span>Track monthly tenor and balance</span>
+                  </div>
+                  <label class="switch">
+                    <input id="isInstallment" type="checkbox" />
+                    <span></span>
+                  </label>
+                </div>
+                <div class="installment-fields" id="installmentFields">
+                  <label>
+                    Total Tenor
+                    <input id="totalTenor" type="number" min="1" step="1" placeholder="Months" />
+                  </label>
+                  <div class="calculated-grid">
+                    <div>
+                      <span>Tenor Remaining</span>
+                      <strong id="previewRemaining">0 months</strong>
+                    </div>
+                    <div>
+                      <span>Total Amount</span>
+                      <strong id="previewTotal">PHP 0.00</strong>
+                    </div>
+                    <div>
+                      <span>Outstanding Balance</span>
+                      <strong id="previewOutstanding">PHP 0.00</strong>
+                    </div>
+                  </div>
+                </div>
+                <div class="form-actions">
+                  <button class="submit-button" type="submit" id="expenseSubmitButton">
+                    <span class="icon" data-icon="save"></span>
+                    Save Expense
+                  </button>
+                  <button class="secondary-button" type="button" id="cancelEditButton" hidden>
+                    Cancel Edit
+                  </button>
+                </div>
+              </form>
+            </section>
+
+            <section class="panel expense-table-panel">
+              <div class="panel-heading">
+                <span class="heading-icon icon" data-icon="list"></span>
+                <div>
+                  <h2>Expense Records</h2>
+                  <p>Review balances and monthly commitments.</p>
+                </div>
+                <label class="active-filter-toggle">
+                  <input id="activeExpenseOnly" type="checkbox" />
+                  Active only
+                </label>
+              </div>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Owner</th>
+                      <th>Wallet</th>
+                      <th>Category</th>
+                      <th>Description</th>
+                      <th>Monthly</th>
+                      <th>Remaining</th>
+                      <th>Outstanding</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody id="expenseTable"></tbody>
+                </table>
+              </div>
+            </section>
+          </div>
+        </section>
+
+        <section class="tab-panel dashboard-panel" id="dashboardPanel" aria-labelledby="dashboard">
+          <section class="panel filters-panel">
+            <div class="filter-group">
+              <label>
+                Month
+                <input id="filterMonth" type="month" />
+              </label>
+              <label>
+                Owner
+                <select id="filterOwner"></select>
+              </label>
+              <label>
+                Wallet
+                <select id="filterWallet"></select>
+              </label>
+              <label>
+                Installment
+                <select id="filterInstallment">
+                  <option value="installment">Installment only</option>
+                  <option value="all">All expenses</option>
+                  <option value="one-time">One-time only</option>
+                </select>
+              </label>
+            </div>
+          </section>
+
+          <section class="summary-sheet">
+            <div class="summary-title-row">
+              <span class="summary-avatar" id="summaryAvatar"></span>
+              <h2 id="summaryTitle">Summary for All Owners:</h2>
+            </div>
+            <article class="summary-block">
+              <h3>Outstanding Balance</h3>
+              <div class="summary-box">
+                <strong id="metricOutstanding">PHP 0.00</strong>
+                <div class="summary-callout">
+                  <b id="metricPaidPercent">0%</b>
+                  <span id="metricAverageTenor">0 average tenor</span>
+                </div>
+              </div>
+            </article>
+            <article class="summary-block">
+              <h3>Monthly Installment</h3>
+              <div class="summary-box">
+                <div>
+                  <strong id="metricMonthly">PHP 0.00</strong>
+                  <small id="metricMonthLabel">As of this month</small>
+                </div>
+                <div class="budget-meter">
+                  <div class="budget-meter-fill" id="metricBudgetFill"></div>
+                  <b id="metricBudgetPercent">0%</b>
+                  <span>Of budget</span>
+                </div>
+              </div>
+            </article>
+          </section>
+
+          <div class="section-grid dashboard-grid">
+            <section class="panel trend-panel">
+              <div class="panel-heading">
+                <span class="heading-icon icon" data-icon="chart"></span>
+                <div>
+                  <h2>6-Month Expense Trend</h2>
+                  <p>Monthly expenses as bars with a trend line.</p>
+                </div>
+              </div>
+              <div id="expenseTrendGraph" class="trend-graph"></div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-heading">
+                <span class="heading-icon icon" data-icon="pie"></span>
+                <div>
+                  <h2>Category Breakdown</h2>
+                  <p>Outstanding balance by category.</p>
+                </div>
+              </div>
+              <div id="categoryBreakdown" class="breakdown-list"></div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-heading">
+                <span class="heading-icon icon" data-icon="forecast"></span>
+                <div>
+                  <h2>6-Month Forecast</h2>
+                  <p>Projected installment payments by month.</p>
+                </div>
+              </div>
+              <div id="forecastList" class="forecast-list"></div>
+            </section>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>

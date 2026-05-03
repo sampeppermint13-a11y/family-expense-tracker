@@ -1,0 +1,11 @@
+{
+  "name": "family-debt-expense-tracker",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "@netlify/blobs": "^9.1.0"
+  },
+  "scripts": {
+    "start": "node server.js"
+  }
+}
